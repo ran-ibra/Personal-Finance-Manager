@@ -1,7 +1,11 @@
 import sys
+from users import UserManager
+from transactions import TransactionManager
+from utils import load_data, save_data
 
-# da lma n3ml login aw haga h7tago 
-current_user = None
+# Initialize managers
+user_manager = UserManager()
+transaction_manager = TransactionManager()
 
 def print_header(title: str):
     print("\n" + "=" * 50)
