@@ -1,0 +1,10 @@
+{
+    "hager": {
+        "password": "$2b$12$mC0qV5hP4h/b6u7hvI2WTO6yh45MnXfLmRwmje/BwIIIjWrPVkYsi",
+        "balance": 0.0
+    },
+    "rana": {
+        "password": "$2b$12$MRN4lOibQTx4OVWe7y9H6uX4pkxSwChY/K.LNv2bmT8D45ysD10zK",
+        "balance": 3000.0
+    }
+}

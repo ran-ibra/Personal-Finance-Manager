@@ -107,8 +107,6 @@ def save_transactions(transactions: List[Dict]) -> None:
         if not isinstance(transactions, list):
             raise DataValidationError("Transactions must be a list")
             
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(TRANSACTIONS_FILE), exist_ok=True)
         
         fieldnames = transactions[0].keys()
         with open(TRANSACTIONS_FILE, 'w', newline='') as f:
