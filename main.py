@@ -17,16 +17,18 @@ from reports import ReportsManager
 # -----------------------------
 # Helper UI functions
 # -----------------------------
-def print_header(title: str):
-    print("\n" + "=" * 60)
-    print(title.center(60))
-    print("=" * 60)
 
 
 def pause():
     input("\nPress Enter to continue...")
 
-
+def print_header(title: str):
+    user = user_manager.get_current_user()
+    name_display = f"👤 {user}" if user else " Not logged in"
+    print("\n" + "=" * 60)
+    print(f"{title.center(60)}")
+    print("=" * 60)
+    print(f"{name_display}\n" + "-" * 60)
 # -----------------------------
 # Initialize Managers
 # -----------------------------
@@ -35,13 +37,17 @@ transaction_manager = TransactionManager()
 reports_manager = ReportsManager(transaction_manager)
 
 
+if user_manager.get_current_user():
+    print(f"✅ Welcome back, {user_manager.get_current_user()}! You are already logged in.\n")
+
+
 # -----------------------------
 # Menus
 # -----------------------------
 def main_menu():
     """Main entry menu"""
     while True:
-        print_header("💰 PERSONAL FINANCE MANAGER")
+        print_header("PERSONAL FINANCE MANAGER")
         print("1. User Management")
         print("2. Transactions")
         print("3. Reports")
@@ -59,14 +65,14 @@ def main_menu():
             print("👋 Goodbye! Have a great day.")
             sys.exit(0)
         else:
-            print("❌ Invalid choice.")
+            print(" Invalid choice.")
             pause()
 
 
 def user_menu():
     """Handles user-related options"""
     while True:
-        print_header("👤 USER MANAGEMENT")
+        print_header("USER MANAGEMENT")
         print("1. Register User")
         print("2. Login User")
         print("3. Logout")
@@ -88,12 +94,12 @@ def user_menu():
 
         elif choice == "3":
             user_manager.logout()
-            print("✅ Logged out successfully.")
+            print("Logged out successfully.")
 
         elif choice == "4":
             return
         else:
-            print("❌ Invalid choice.")
+            print("Invalid choice.")
         pause()
 
 
@@ -126,7 +132,7 @@ def transaction_menu():
                 txn = transaction_manager.add_transaction(
                     username, amount, category, description, t_type
                 )
-                print(f"✅ Transaction added: {txn['id']} ({txn['type']})")
+                print(f" Transaction added: {txn['id']} ({txn['type']})")
 
                 # Update user balance
                 if t_type == "income":
@@ -135,7 +141,7 @@ def transaction_menu():
                     user_manager.update_balance(username, -amount)
 
             except ValueError:
-                print("❌ Invalid amount. Must be a number.")
+                print(" Invalid amount. Must be a number.")
 
         elif choice == "2":
             txns = transaction_manager.get_user_transactions(username)
@@ -164,14 +170,14 @@ def transaction_menu():
                 try:
                     updates["amount"] = float(new_amount)
                 except ValueError:
-                    print("❌ Invalid amount.")
+                    print(" Invalid amount.")
             updated = transaction_manager.edit_transaction(int(txn_id), updates)
-            print("✅ Transaction updated." if updated else "❌ Transaction not found.")
+            print("✅ Transaction updated." if updated else " Transaction not found.")
 
         elif choice == "4":
             txn_id = input("Enter transaction ID to delete: ").strip()
             deleted = transaction_manager.delete_transaction(int(txn_id))
-            print("✅ Transaction deleted." if deleted else "❌ Transaction not found.")
+            print("✅ Transaction deleted." if deleted else " Transaction not found.")
 
         elif choice == "5":
             cat = input("Category (optional): ").strip() or None
@@ -187,20 +193,20 @@ def transaction_menu():
         elif choice == "6":
             return
         else:
-            print("❌ Invalid choice.")
+            print(" Invalid choice.")
         pause()
 
 
 def report_menu():
     """Handles reports and summaries"""
     if not user_manager.get_current_user():
-        print("⚠️  Please log in first.")
+        print("  Please log in first.")
         pause()
         return
 
     username = user_manager.get_current_user()
     while True:
-        print_header("📊 REPORTS & DASHBOARD")
+        print_header("REPORTS & DASHBOARD")
         print("1. Dashboard Summary")
         print("2. Monthly Report")
         print("3. Category Breakdown")
@@ -224,7 +230,7 @@ def report_menu():
         elif choice == "4":
             return
         else:
-            print("❌ Invalid choice.")
+            print(" Invalid choice.")
         pause()
 
 
@@ -235,6 +241,6 @@ if __name__ == "__main__":
     try:
         main_menu()
     except KeyboardInterrupt:
-        print("\n\n👋 Exiting... Goodbye!")
+        print("\n\n Exiting... Goodbye!")
         sys.exit(0)
             
