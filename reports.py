@@ -1,99 +1,188 @@
+import json
+import os
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict
 from transactions import TransactionManager
+
+
+BUDGET_FILE = "budgets.json"
 
 
 class ReportsManager:
     def __init__(self, transaction_manager: TransactionManager):
         self.transaction_manager = transaction_manager
-
-    def dashboard_summary(self, username: str) -> Dict[str, float]:
-        """Calculate total income, expenses, and balance for the user."""
-        user_txns = self.transaction_manager.get_user_transactions(username)
-        total_income = sum(t.get("amount", 0) for t in user_txns if t.get("type") == "income")
-        total_expense = sum(t.get("amount", 0) for t in user_txns if t.get("type") == "expense")
-        balance = total_income - total_expense
-
-        return {
-            "Total Income": round(total_income, 2),
-            "Total Expense": round(total_expense, 2),
-            "Net Balance": round(balance, 2)
-        }
+        self.budgets = self._load_budgets()
 
 
-    def monthly_report(self, username: str, month: str) -> Dict[str, float]:
-        """Summarize income, expenses, and count for a specific month (YYYY-MM)."""
-        user_txns = self.transaction_manager.get_user_transactions(username)
-
-        def in_month(txn):
+    def _load_budgets(self) -> Dict[str, Dict]:
+        if os.path.exists(BUDGET_FILE):
             try:
-                return txn["date"].startswith(month)
-            except (KeyError, AttributeError):
-                return False
+                with open(BUDGET_FILE, "r") as f:
+                    return json.load(f)
+            except json.JSONDecodeError:
+                return {}
+        return {}
 
-        monthly_txns = [t for t in user_txns if in_month(t)]
+    def _save_budgets(self):
+    
+        with open(BUDGET_FILE, "w") as f:
+            json.dump(self.budgets, f, indent=4)
 
-        income = sum(t["amount"] for t in monthly_txns if t["type"] == "income")
-        expense = sum(t["amount"] for t in monthly_txns if t["type"] == "expense")
+    def set_monthly_budget(self, username: str, month: str, limit: float):
+        
+        if username not in self.budgets:
+            self.budgets[username] = {}
+        self.budgets[username][month] = {"limit": limit}
+        self._save_budgets()
+        print(f"✅ Budget for {month} set to ${limit:,.2f}")
 
-        return {
+    def budget_status(self, username: str, month: str) -> Dict[str, float]:
+        budget = self.budgets.get(username, {}).get(month)
+        if not budget:
+            return {"message": f"No budget set for {month}. Please set one first."}
+
+        transactions = self.transaction_manager.get_user_transactions(username)
+        expenses = sum(
+            t["amount"] for t in transactions
+            if t["type"] == "expense" and t["date"].startswith(month)
+        )
+
+        limit = budget["limit"]
+        remaining = limit - expenses
+        percent_used = min(100, round((expenses / limit) * 100, 2)) if limit > 0 else 0
+
+        status = {
             "Month": month,
-            "Income": round(income, 2),
-            "Expense": round(expense, 2),
-            "Net Balance": round(income - expense, 2),
-            "Transaction Count": len(monthly_txns)
+            "Budget Limit": f"${limit:,.2f}",
+            "Expenses": f"${expenses:,.2f}",
+            "Remaining": f"${remaining:,.2f}",
+            "Used (%)": f"{percent_used}%",
         }
 
+        if expenses > limit:
+            status["Warning"] = "You have exceeded your monthly budget!"
+        elif percent_used >= 90:
+            status["Caution"] = "You are close to exceeding your budget."
+        else:
+            status["Status"] = "You are within your budget."
+
+        return status
+
+    def calculate_health_score(self, username: str) -> Dict[str, float]:
+       
+        txns = self.transaction_manager.get_user_transactions(username)
+        if not txns:
+            return {"score": 50, "message": "No transactions available yet."}
+
+        income = sum(t["amount"] for t in txns if t["type"] == "income")
+        expenses = sum(t["amount"] for t in txns if t["type"] == "expense")
+        if income == 0:
+            return {"score": 30, "message": "No income recorded — please add income transactions."}
+
+        savings_ratio = max(0, (income - expenses) / income)  # higher = better
+        expense_count = sum(1 for t in txns if t["type"] == "expense")
+        avg_expense = expenses / expense_count if expense_count > 0 else 0
+
+        score = (
+            (savings_ratio * 60)  
+            + (min(1, 5000 / (avg_expense + 1)) * 20)  
+            + (min(1, 20 / (expense_count + 1)) * 20) 
+        )
+
+        # Normalize score to 100
+        score = min(100, round(score, 2))
+
+        # Feedback
+        if score >= 80:
+            note = "💚 Excellent financial health! Keep it up."
+        elif score >= 60:
+            note = "💛 Good balance. Review your spending habits for improvement."
+        elif score >= 40:
+            note = "🟠 Caution: Expenses are high compared to income."
+        else:
+            note = "🔴 Poor health. Reduce expenses or increase savings."
+
+        return {"score": score, "message": note}
+
+    # -----------------------------
+    # Existing Reports
+    # -----------------------------
+    def dashboard_summary(self, username: str) -> Dict[str, float]:
+        txns = self.transaction_manager.get_user_transactions(username)
+        income = sum(t["amount"] for t in txns if t["type"] == "income")
+        expenses = sum(t["amount"] for t in txns if t["type"] == "expense")
+        return {
+            "Total Income": f"${income:,.2f}",
+            "Total Expenses": f"${expenses:,.2f}",
+            "Net Balance": f"${(income - expenses):,.2f}"
+        }
 
     def category_breakdown(self, username: str) -> Dict[str, float]:
-        """Show spending by category (expenses only)."""
-        user_txns = self.transaction_manager.get_user_transactions(username)
-        category_totals: Dict[str, float] = {}
-
-        for t in user_txns:
+        txns = self.transaction_manager.get_user_transactions(username)
+        summary = {}
+        for t in txns:
             if t["type"] == "expense":
-                cat = t.get("category", "Uncategorized")
-                category_totals[cat] = category_totals.get(cat, 0) + t.get("amount", 0)
+                summary[t["category"]] = summary.get(t["category"], 0) + t["amount"]
+        return dict(sorted(summary.items(), key=lambda x: x[1], reverse=True))
 
-        # Sort by descending spending
-        return dict(sorted(category_totals.items(), key=lambda x: x[1], reverse=True))
+    def monthly_report(self, username: str, month: str) -> Dict[str, float]:
+        txns = self.transaction_manager.get_user_transactions(username)
+        month_txns = [t for t in txns if t["date"].startswith(month)]
+        income = sum(t["amount"] for t in month_txns if t["type"] == "income")
+        expense = sum(t["amount"] for t in month_txns if t["type"] == "expense")
+        return {
+            "Month": month,
+            "Income": f"${income:,.2f}",
+            "Expense": f"${expense:,.2f}",
+            "Balance": f"${(income - expense):,.2f}",
+            "Transaction Count": len(month_txns)
+        }
 
-
-    @staticmethod
-    def _print_header(title: str):
+  
+    def print_report(self, title: str, data: Dict):
         print("\n" + "=" * 60)
         print(title.center(60))
         print("=" * 60)
-
-    @staticmethod
-    def _print_footer():
+        for key, value in data.items():
+            print(f"{key:<25}: {value}")
         print("=" * 60)
 
-    def print_report(self, title: str, data: Dict[str, float]):
-        """Nicely formatted report display."""
-        self._print_header(title)
 
-        if not data:
-            print(" No data available for this report.")
-            self._print_footer()
-            return
+    # @staticmethod
+    # def _print_header(title: str):
+    #     print("\n" + "=" * 60)
+    #     print(title.center(60))
+    #     print("=" * 60)
 
-        # Detect if it's a category breakdown (dict of many keys)
-        if all(isinstance(v, (int, float)) for v in data.values()) and len(data) > 5:
-            self._print_category_table(data)
-        else:
-            for key, value in data.items():
-                formatted = f"${value:,.2f}" if isinstance(value, (int, float)) else str(value)
-                print(f"{key:<25}: {formatted}")
-        self._print_footer()
+    # @staticmethod
+    # def _print_footer():
+    #     print("=" * 60)
 
-    def _print_category_table(self, data: Dict[str, float]):
-        """Render category breakdown as a mini chart."""
-        total = sum(data.values()) or 1  # Avoid division by zero
-        print(f"{'Category':<20} | {'Amount':>10} | {'Chart'}")
-        print("-" * 60)
+    # def print_report(self, title: str, data: Dict[str, float]):
+    #     """Nicely formatted report display."""
+    #     self._print_header(title)
 
-        for category, amount in data.items():
-            bar_length = int((amount / total) * 30)
-            bar = "█" * bar_length
-            print(f"{category:<20} | ${amount:>9.2f} | {bar}")
+    #     if not data:
+    #         print(" No data available for this report.")
+    #         self._print_footer()
+    #         return
+
+    #     # Detect if it's a category breakdown (dict of many keys)
+    #     if all(isinstance(v, (int, float)) for v in data.values()) and len(data) > 5:
+    #         self._print_category_table(data)
+    #     else:
+    #         for key, value in data.items():
+    #             formatted = f"${value:,.2f}" if isinstance(value, (int, float)) else str(value)
+    #             print(f"{key:<25}: {formatted}")
+    #     self._print_footer()
+
+    # def _print_category_table(self, data: Dict[str, float]):
+    #     """Render category breakdown as a mini chart."""
+    #     total = sum(data.values()) or 1  # Avoid division by zero
+    #     print(f"{'Category':<20} | {'Amount':>10} | {'Chart'}")
+    #     print("-" * 60)
+
+    #     for category, amount in data.items():
+    #         bar_length = int((amount / total) * 30)
+    #         bar = "█" * bar_length
+    #         print(f"{category:<20} | ${amount:>9.2f} | {bar}")
