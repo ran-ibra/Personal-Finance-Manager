@@ -4,3 +4,25 @@ id,user,amount,category,description,type,date
 3,rana,300.0,eating,trying new place,expense,2025-10-16 10:34:39
 4,rana,100.0,playfootball,my first trial,expense,2025-10-5 14:34:39
 5,rana,6000.0,work,my first bouns,income,2025-10-16 19:34:39
+6,rana,100.0,eating,breakfast withgogo,expense,2025-10-21 15:00:41
+5,rana,6000.0,work,freelance project completion,income,2025-10-21 19:34:39
+6,rana,100.0,eating,breakfast with Gogo,expense,2025-10-21 15:00:41
+7,rana,2500.0,work,monthly salary,income,2025-09-05 09:00:00
+8,rana,800.0,rent,apartment rent payment,expense,2025-09-03 12:00:00
+9,rana,120.0,transport,uber rides,expense,2025-09-04 18:10:00
+10,rana,200.0,shopping,bought new shoes,expense,2025-09-07 16:45:00
+11,rana,3200.0,work,freelance writing gig,income,2025-09-20 20:15:00
+12,rana,75.0,entertainment,cinema tickets,expense,2025-09-25 21:30:00
+13,rana,4000.0,work,monthly salary,income,2025-08-05 09:00:00
+14,rana,600.0,rent,shared apartment rent,expense,2025-08-03 11:15:00
+15,rana,150.0,eating,weekend lunch with friends,expense,2025-08-06 14:00:00
+16,rana,300.0,shopping,new headphones,expense,2025-08-10 17:00:00
+17,rana,3500.0,work,bonus payment,income,2025-08-20 10:30:00
+18,rana,90.0,entertainment,online game pass,expense,2025-08-22 19:20:00
+19,rana,2800.0,work,monthly salary,income,2025-07-05 09:00:00
+20,rana,700.0,rent,monthly rent,expense,2025-07-03 10:00:00
+21,rana,250.0,eating,lunch with coworkers,expense,2025-07-04 13:30:00
+22,rana,400.0,transport,weekly fuel refill,expense,2025-07-08 08:00:00
+23,rana,200.0,health,pharmacy and vitamins,expense,2025-07-12 17:00:00
+24,rana,150.0,entertainment,movie night,expense,2025-07-15 20:00:00
+25,rana,1500.0,work,side project payment,income,2025-07-20 18:30:00

@@ -1,3 +1,4 @@
+import getpass
 
 import sys
 from users import UserManager
@@ -69,10 +70,10 @@ def user_menu():
             password = input("Enter password: ").strip()
             success, msg = user_manager.register_user(username, password)
             print(msg)
-
         elif choice == "2":
             username = input("Enter username: ").strip()
-            password = input("Enter password: ").strip()
+            # password = input("Enter password: ").strip()
+            password = getpass.getpass("Enter password: ").strip()
             success, msg = user_manager.login(username, password)
             print(msg)
 
@@ -276,7 +277,6 @@ def budget_submenu(username: str):
                 val = input("Enter budget limit: ").strip()
                 try:
                     limit = float(val)
-                    # set_monthly_budget may return a boolean or nothing; handle both
                     res = reports_manager.set_monthly_budget(username, month, limit)
                     if res is False:
                         print("Failed to set budget.")
