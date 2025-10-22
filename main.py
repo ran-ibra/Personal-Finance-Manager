@@ -6,7 +6,7 @@ from transactions import TransactionManager
 from reports import ReportsManager
 from datetime import datetime
 from datetime import datetime
-
+from advancedFeatures import AdvancedFeatures
 
 
 def pause():
@@ -23,7 +23,7 @@ def print_header(title: str):
 user_manager = UserManager()
 transaction_manager = TransactionManager()
 reports_manager = ReportsManager(transaction_manager)
-
+advanced_features = AdvancedFeatures(transaction_manager)
 
 if user_manager.get_current_user():
     print(f"✅ Welcome back, {user_manager.get_current_user()}! You are already logged in.\n")
@@ -61,7 +61,8 @@ def user_menu():
         print("1. Register User")
         print("2. Login User")
         print("3. Logout")
-        print("4. Back to Main Menu")
+        print("4. View Profile")
+        print("5. Back to Main Menu")
 
         choice = input("\nEnter your choice: ").strip()
 
@@ -80,8 +81,19 @@ def user_menu():
         elif choice == "3":
             user_manager.logout()
             print("Logged out successfully.")
-
         elif choice == "4":
+            profile= user_manager.get_user_profile(),
+            if not profile:
+                print("No user logged in or user not found.")
+            else:
+                print("\nUSER PROFILE")
+                print("-" * 20)
+                print(f"Username : {profile['username']}")
+                print(f"Balance  : {profile['balance']:.2f}")
+                
+
+
+        elif choice == "5":
             return
         else:
             print("Invalid choice.")
@@ -181,8 +193,6 @@ def transaction_menu():
         pause()
 
 def report_menu():
-    """Reports & dashboard menu with basic input validation and clearer feedback."""
-
     def _validate_month(month_str: str) -> bool:
         try:
             datetime.strptime(month_str, "%Y-%m")
@@ -203,7 +213,10 @@ def report_menu():
         print("3. Category Breakdown")
         print("4. Financial Health Score")
         print("5. Monthly Budget")
-        print("6. Back to Main Menu")
+        print("6. Manage Savings Goals")
+        print("7. Manage Recurring Transactions")
+        print("8. Back to Main Menu")
+
 
         choice = input("\nEnter your choice: ").strip()
 
@@ -244,8 +257,12 @@ def report_menu():
 
         elif choice == "5":
             budget_submenu(username)
-
         elif choice == "6":
+            savings_menu(username)
+        elif choice == "7":
+            recurring_menu(username)
+
+        elif choice == "8":
             return
 
         else:
@@ -302,10 +319,101 @@ def budget_submenu(username: str):
         else:
             print("Invalid choice.")
         pause()
+def savings_menu(username: str):
+    while True:
+        print_header("SAVINGS GOALS")
+        print("1. Add New Goal")
+        print("2. View Goals")
+        print("3. Back")
+
+        choice = input("\nEnter your choice: ").strip()
+
+        if choice == "1":
+            name = input("Goal name: ").strip()
+            try:
+                target = float(input("Target amount: "))
+                advanced_features.set_savings_goal(username, name, target)
+            except ValueError:
+                print("Invalid amount.")
+        elif choice == "2":
+            goals = advanced_features.get_savings_goals(username)
+            for g_name, g_data in goals.items():
+                print(f"\n🏁 {g_name}")
+                for k, v in g_data.items():
+                    print(f"  {k:<15}: {v}")
+        elif choice == "3":
+            return
+        else:
+            print("Invalid choice.")
+        pause()
+
+
+def recurring_menu(username: str):
+    while True:
+        print_header("RECURRING TRANSACTIONS")
+        print("1. Add Recurring Transaction")
+        print("2. View Recurring Transactions")
+        print("3. Process Due Transactions")
+        print("4. Back")
+
+        choice = input("\nEnter your choice: ").strip()
+
+        if choice == "1":
+            try:
+                amount = float(input("Amount: "))
+                category = input("Category: ").strip()
+                description = input("Description: ").strip()
+                t_type = input("Type (income/expense): ").strip().lower()
+                frequency = input("Frequency (daily/weekly/monthly): ").strip().lower()
+                advanced_features.add_recurring_transaction(
+                    username, amount, category, description, t_type, frequency
+                )
+            except ValueError:
+                print("Invalid input.")
+        elif choice == "2":
+            recs = advanced_features.get_recurring_transactions(username)
+            if not recs:
+                print("No recurring transactions found.")
+            else:
+                for r in recs:
+                    print(
+                        f"{r['type'].capitalize()} ${r['amount']:,.2f} "
+                        f"- {r['category']} ({r['frequency'].capitalize()} | Next: {r['next_date']})"
+                    )
+        elif choice == "3":
+            advanced_features.process_recurring_transactions(username)
+        elif choice == "4":
+            return
+        else:
+            print("Invalid choice.")
+        pause()
+
 
 
 if __name__ == "__main__":
     try:
+        class A:
+            def method(self):
+                print("A method")
+            
+        class B(A):
+            def method(self):
+                print("B method")
+                
+
+        class C(A):
+            def method(self):
+                print("C method")
+               
+
+        class D(B, C):
+            def method(self):
+                print("D method")
+                super().method()
+                
+
+        d = D()
+        d.method()
         main_menu()
     except KeyboardInterrupt:
         print("\n\n Exiting... Goodbye!")

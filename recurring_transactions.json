@@ -1,0 +1,12 @@
+{
+    "rana": [
+        {
+            "amount": 300.0,
+            "category": "eating",
+            "description": "",
+            "type": "expense",
+            "frequency": "daily",
+            "next_date": "2025-10-22"
+        }
+    ]
+}

@@ -10,7 +10,6 @@ class UserManager:
         self.current_user = None
 
     def register_user(self, username: str, password: str) -> Tuple[bool, str]:
-        """Register a new user"""
         try:
             if not username or not password:
                 return False, "Username and password are required"
@@ -34,7 +33,6 @@ class UserManager:
             return False, f"Unexpected error during registration: {str(e)}"
 
     def login(self, username: str, password: str) -> Tuple[bool, str]:
-        """Login a user"""
         try:
             if not username or not password:
                 return False, "Username and password are required"
@@ -56,30 +54,30 @@ class UserManager:
             return False, f"Unexpected error during login: {str(e)}"
 
     def logout(self) -> None:
-        """Logout current user"""
         self.current_user = None
 
     def get_user_balance(self, username: str) -> float:
-        """Get user's current balance"""
         if username in self.users:
             return self.users[username]["balance"]
         return 0.0
 
     def update_balance(self, username: str, amount: float) -> None:
-        """Update user's balance"""
         if username in self.users:
             self.users[username]["balance"] += amount
             save_users(self.users)
+    def get_user_profile(self, username: Optional[str] = None) -> Optional[Dict]:
+        if username is None:
+            username = self.current_user
+        if not username:
+            return None
+        user = self.users.get(username)
+        if not user:
+            return None
+        return {
+            "username": username,
+            "balance": float(user.get("balance", 0.0)),
+        }
 
     def get_current_user(self) -> Optional[str]:
-        """Get current logged in user"""
         return self.current_user
 
-
-#####testiinggg temmpooraarryy###
-if __name__ == "__main__":
-    manager = UserManager()
-    print(manager.register_user("hager", "1234"))
-    print(manager.login("hager", "1234"))
-    print(manager.register_user("rana", "1234"))
-    print(manager.login("rana", "1234"))
