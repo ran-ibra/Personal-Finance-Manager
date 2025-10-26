@@ -4,6 +4,8 @@
 A Python-based **console application** that helps users manage their income, expenses, savings goals, and budgets — all from the terminal.
 It includes detailed reports, financial health analysis, and persistent data storage using JSON and CSV files.
 
+video:
+https://drive.google.com/file/d/1WTdObbgb8yKYfZS0lK73HL-xSWW6sGR4/view?usp=sharing
 ---
 
 ### 🧭 Table of Contents
