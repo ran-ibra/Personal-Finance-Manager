@@ -1,3 +1,5 @@
+
+import re
 from typing import Dict, Optional, Tuple
 from utils import (
     load_users, save_users, hash_password, verify_password,
@@ -13,24 +15,35 @@ class UserManager:
         try:
             if not username or not password:
                 return False, "Username and password are required"
-                
+
             if username in self.users:
                 return False, "Username already exists"
-            
-            # Hash the password before storing
+
+            #  Password regex validation
+            pattern = r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@_#$%^&+=!]).{8,}$'
+            if not re.match(pattern, password):
+                return False, (
+                    "Password must be at least 8 characters long, "
+                    "contain at least one uppercase letter, one lowercase letter, "
+                    "one number, and one special character (@, _, #, $, etc.)"
+                )
+
             hashed_password = hash_password(password)
             
             self.users[username] = {
-                "password": hashed_password.decode('utf-8'),  # Store as string
+                "password": hashed_password.decode('utf-8'),
                 "balance": 0.0
             }
             save_users(self.users)
-            return True, "User registered successfully"
             
+            self.users = load_users()
+            return True, "User registered successfully"
+
         except DataError as e:
             return False, f"Registration failed: {str(e)}"
         except Exception as e:
             return False, f"Unexpected error during registration: {str(e)}"
+
 
     def login(self, username: str, password: str) -> Tuple[bool, str]:
         try:

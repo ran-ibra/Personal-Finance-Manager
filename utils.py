@@ -1,3 +1,4 @@
+
 import json
 import csv
 import os
@@ -5,7 +6,7 @@ import bcrypt
 from typing import Dict, List, Tuple
 from datetime import datetime
 
-# Custom exceptions
+# ---------- Exceptions ----------
 class DataError(Exception):
     """Base class for data handling errors"""
     pass
@@ -15,39 +16,25 @@ class FileAccessError(DataError):
     pass
 
 class DataValidationError(DataError):
-    """Raised when data validation fails"""
+    """Raised when data format/content is invalid"""
     pass
 
-# File paths
+# ---------- File paths ----------
 USERS_FILE = "users.json"
 TRANSACTIONS_FILE = "transactions.csv"
 
-# Password handling
-def hash_password(password: str) -> bytes:
-    """Hash a password using bcrypt"""
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
-
-def verify_password(password: str, hashed: str) -> bool:
-    """Verify a password against its hash"""
-    try:
-        return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
-    except (ValueError, TypeError):
-        return False
-
+# ---------- Users helpers ----------
 def load_users() -> Dict:
-    """Load users from JSON file"""
+    """Load users from JSON file; return {} if not exists"""
     try:
-        if os.path.exists(USERS_FILE):
-            with open(USERS_FILE, 'r') as f:
-                data = json.load(f)
-                # Validate data structure
-                if not isinstance(data, dict):
-                    raise DataValidationError("Invalid users data format")
-                return data
-        return {}
-    except json.JSONDecodeError as e:
-        raise FileAccessError(f"Error decoding users file: {str(e)}")
-    except IOError as e:
+        if not os.path.exists(USERS_FILE):
+            return {}
+        with open(USERS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            if not isinstance(data, dict):
+                raise DataValidationError("Users file must contain a JSON object")
+            return data
+    except (json.JSONDecodeError, OSError) as e:
         raise FileAccessError(f"Error reading users file: {str(e)}")
 
 def save_users(users: Dict) -> None:
@@ -58,97 +45,70 @@ def save_users(users: Dict) -> None:
         
         # Safely create directory only if path includes one
         directory = os.path.dirname(USERS_FILE)
-        if directory:  # avoid error if USERS_FILE is in current folder
+        if directory:
             os.makedirs(directory, exist_ok=True)
-        
-        with open(USERS_FILE, 'w') as f:
-            json.dump(users, f, indent=4)
-    except IOError as e:
+        with open(USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(users, f, indent=4, ensure_ascii=False)
+    except OSError as e:
         raise FileAccessError(f"Error saving users file: {str(e)}")
     except TypeError as e:
         raise DataValidationError(f"Error serializing users data: {str(e)}")
 
+def hash_password(password: str) -> bytes:
+    if not password:
+        raise DataValidationError("Password is empty")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
+
+def verify_password(password: str, stored_hash: str) -> bool:
+    if isinstance(stored_hash, str):
+        stored_hash = stored_hash.encode("utf-8")
+    return bcrypt.checkpw(password.encode("utf-8"), stored_hash)
+
+# ---------- Transactions helpers ----------
 def load_transactions() -> List[Dict]:
     """Load transactions from CSV file"""
     try:
-        transactions = []
+        transactions: List[Dict] = []
         if os.path.exists(TRANSACTIONS_FILE):
-            with open(TRANSACTIONS_FILE, 'r') as f:
+            with open(TRANSACTIONS_FILE, "r", encoding="utf-8", newline="") as f:
                 reader = csv.DictReader(f)
-                transactions = list(reader)
-                
-                # Validate transaction data
-                required_fields = {'id', 'user', 'amount', 'category', 'type', 'date'}
-                for transaction in transactions:
-                    missing_fields = required_fields - set(transaction.keys())
-                    if missing_fields:
-                        raise DataValidationError(
-                            f"Transaction missing required fields: {missing_fields}")
-                    
-                    # Convert amount to float
+                for row in reader:
+                    # Normalize fields
+                    row["id"] = int(row.get("id", 0)) if row.get("id") else 0
+                    row["user"] = row.get("user", "")
+                    row["category"] = row.get("category", "")
+                    row["description"] = row.get("description", "")
+                    row["type"] = row.get("type", "").lower()
+                    # amount & date
                     try:
-                        transaction['amount'] = float(transaction['amount'])
-                    except ValueError:
-                        raise DataValidationError(
-                            f"Invalid amount in transaction {transaction['id']}")
-                        
+                        row["amount"] = float(row.get("amount", 0.0))
+                    except (TypeError, ValueError):
+                        row["amount"] = 0.0
+                    row["date"] = row.get("date") or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    transactions.append(row)
         return transactions
-    except csv.Error as e:
-        raise FileAccessError(f"Error reading transactions file: {str(e)}")
-    except IOError as e:
+    except (csv.Error, OSError) as e:
         raise FileAccessError(f"Error accessing transactions file: {str(e)}")
 
 def save_transactions(transactions: List[Dict]) -> None:
     """Save transactions to CSV file"""
     try:
-        if not transactions:
-            return
-            
-        if not isinstance(transactions, list):
-            raise DataValidationError("Transactions must be a list")
-            
-        
-        fieldnames = transactions[0].keys()
-        with open(TRANSACTIONS_FILE, 'w', newline='') as f:
+        fieldnames = ["id", "user", "amount", "category", "description", "type", "date"]
+        with open(TRANSACTIONS_FILE, "w", encoding="utf-8", newline="") as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(transactions)
-    except csv.Error as e:
+            for t in transactions:
+                # ensure required keys exist
+                row = {k: t.get(k, "") for k in fieldnames}
+                writer.writerow(row)
+    except (csv.Error, OSError) as e:
         raise FileAccessError(f"Error writing transactions file: {str(e)}")
-    except IOError as e:
-        raise FileAccessError(f"Error accessing transactions file: {str(e)}")
-    except AttributeError as e:
-        raise DataValidationError(f"Invalid transaction data format: {str(e)}")
 
-def validate_transaction(transaction: Dict) -> bool:
-    """Validate a single transaction"""
-    required_fields = {'user', 'amount', 'category', 'type', 'description'}
-    
-    # Check required fields
-    if not all(field in transaction for field in required_fields):
-        return False
-        
-    # Validate amount
-    try:
-        float(transaction['amount'])
-    except (ValueError, TypeError):
-        return False
-        
-    # Validate date if present
-    if 'date' in transaction:
-        try:
-            datetime.strptime(transaction['date'], "%Y-%m-%d %H:%M:%S")
-        except ValueError:
-            return False
-            
-    return True
-
+# ---------- Combined helpers (optional) ----------
 def load_data() -> Tuple[Dict, List[Dict]]:
     """Load both users and transactions data"""
     try:
-        users = load_users()
-        transactions = load_transactions()
-        return users, transactions
+        return load_users(), load_transactions()
     except (FileAccessError, DataValidationError) as e:
         # Log the error here if needed
         print(f"Error loading data: {str(e)}")

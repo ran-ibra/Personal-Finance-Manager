@@ -77,10 +77,7 @@ class AdvancedFeatures:
         self, username: str, amount: float, category: str,
         description: str, t_type: str, frequency: str
     ):
-        """
-        Add a recurring transaction.
-        frequency: daily, weekly, monthly
-        """
+        
         if username not in self.recurring:
             self.recurring[username] = []
 
@@ -133,5 +130,4 @@ class AdvancedFeatures:
             self._save_json(RECURRING_FILE, self.recurring)
 
     def get_recurring_transactions(self, username: str):
-        """Return list of recurring transactions."""
         return self.recurring.get(username, [])

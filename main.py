@@ -60,9 +60,10 @@ def user_menu():
         print_header("USER MANAGEMENT")
         print("1. Register User")
         print("2. Login User")
-        print("3. Logout")
-        print("4. View Profile")
-        print("5. Back to Main Menu")
+        print("3. Switch User")
+        print("4. Logout")
+        print("5. View Profile")
+        print("6. Back to Main Menu")
 
         choice = input("\nEnter your choice: ").strip()
 
@@ -77,12 +78,19 @@ def user_menu():
             password = getpass.getpass("Enter password: ").strip()
             success, msg = user_manager.login(username, password)
             print(msg)
-
         elif choice == "3":
             user_manager.logout()
-            print("Logged out successfully.")
+            username = input("Enter switched username: ").strip()
+            # password = input("Enter password: ").strip()
+            password = getpass.getpass("Enter password: ").strip()
+            success, msg = user_manager.login(username, password)
+            print(msg)
+
         elif choice == "4":
-            profile= user_manager.get_user_profile(),
+            user_manager.logout()
+            print("Logged out successfully.")
+        elif choice == "5":
+            profile= user_manager.get_user_profile()
             if not profile:
                 print("No user logged in or user not found.")
             else:
@@ -93,7 +101,7 @@ def user_menu():
                 
 
 
-        elif choice == "5":
+        elif choice == "6":
             return
         else:
             print("Invalid choice.")

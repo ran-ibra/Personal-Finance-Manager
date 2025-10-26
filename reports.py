@@ -34,7 +34,7 @@ class ReportsManager:
             self.budgets[username] = {}
         self.budgets[username][month] = {"limit": limit}
         self._save_budgets()
-        print(f"✅ Budget for {month} set to ${limit:,.2f}")
+        print(f" Budget for {month} set to ${limit:,.2f}")
 
     def budget_status(self, username: str, month: str) -> Dict[str, float]:
         budget = self.budgets.get(username, {}).get(month)
@@ -72,7 +72,7 @@ class ReportsManager:
        
         txns = self.transaction_manager.get_user_transactions(username)
         if not txns:
-            return {"score": 50, "message": "No transactions available yet."}
+            return {"score": 0, "message": "No transactions available yet."}
 
         income = sum(t["amount"] for t in txns if t["type"] == "income")
         expenses = sum(t["amount"] for t in txns if t["type"] == "expense")
@@ -146,43 +146,3 @@ class ReportsManager:
         for key, value in data.items():
             print(f"{key:<25}: {value}")
         print("=" * 60)
-
-
-    # @staticmethod
-    # def _print_header(title: str):
-    #     print("\n" + "=" * 60)
-    #     print(title.center(60))
-    #     print("=" * 60)
-
-    # @staticmethod
-    # def _print_footer():
-    #     print("=" * 60)
-
-    # def print_report(self, title: str, data: Dict[str, float]):
-    #     """Nicely formatted report display."""
-    #     self._print_header(title)
-
-    #     if not data:
-    #         print(" No data available for this report.")
-    #         self._print_footer()
-    #         return
-
-    #     # Detect if it's a category breakdown (dict of many keys)
-    #     if all(isinstance(v, (int, float)) for v in data.values()) and len(data) > 5:
-    #         self._print_category_table(data)
-    #     else:
-    #         for key, value in data.items():
-    #             formatted = f"${value:,.2f}" if isinstance(value, (int, float)) else str(value)
-    #             print(f"{key:<25}: {formatted}")
-    #     self._print_footer()
-
-    # def _print_category_table(self, data: Dict[str, float]):
-    #     """Render category breakdown as a mini chart."""
-    #     total = sum(data.values()) or 1  # Avoid division by zero
-    #     print(f"{'Category':<20} | {'Amount':>10} | {'Chart'}")
-    #     print("-" * 60)
-
-    #     for category, amount in data.items():
-    #         bar_length = int((amount / total) * 30)
-    #         bar = "█" * bar_length
-    #         print(f"{category:<20} | ${amount:>9.2f} | {bar}")

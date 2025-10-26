@@ -6,5 +6,17 @@
     "rana": {
         "password": "$2b$12$MRN4lOibQTx4OVWe7y9H6uX4pkxSwChY/K.LNv2bmT8D45ysD10zK",
         "balance": 2900.0
+    },
+    "huda fahmy": {
+        "password": "$2b$12$/rb029ik3S1YiBqwM.f8/ej16dkABU2fddMKxTAHOFoJHiVSfdDLS",
+        "balance": 0.0
+    },
+    "hagers1": {
+        "password": "$2b$12$LVY7oyGQzJjV6wZWlDByeefbD9pXRxX6rDYyAJ33IqozaLnRXPWbq",
+        "balance": -300.0
+    },
+    "hagersameh111": {
+        "password": "$2b$12$0NUSlVbBGHnTggFP2NcLpOjU5Ln.MVbxMxJsv16LHZtZpPpVKKetW",
+        "balance": 0.0
     }
 }
